@@ -13,76 +13,24 @@
             color: #00ffcc;
             overflow: hidden;
         }
-        /* Custom scrollbar for the stream */
-        #stream-container::-webkit-scrollbar {
-            width: 8px;
-        }
-        #stream-container::-webkit-scrollbar-track {
-            background: #001a14;
-        }
-        #stream-container::-webkit-scrollbar-thumb {
-            background-color: #00ffcc;
-            border-radius: 4px;
-            border: 2px solid #001a14;
-        }
-        .ui-panel {
-            background: rgba(0, 15, 10, 0.85);
-            backdrop-filter: blur(10px);
-            border-top: 1px solid #00ffcc;
-        }
-        textarea {
-            background: rgba(0, 50, 40, 0.8);
-            border: 1px solid #00ffcc;
-            color: #00ffcc;
-            box-shadow: 0 0 5px #00ffcc inset;
-        }
-        textarea::placeholder {
-            color: rgba(0, 255, 204, 0.5);
-        }
-        button {
-            font-family: 'Orbitron', sans-serif;
-            transition: background-color 0.3s, box-shadow 0.3s, color 0.3s;
-        }
-        button:hover:not(:disabled) {
-            background-color: #00ffcc;
-            color: #000;
-            box-shadow: 0 0 15px #00ffcc;
-        }
-        button:disabled {
-            background-color: rgba(0, 255, 204, 0.2);
-            border-color: rgba(0, 255, 204, 0.4);
-            cursor: not-allowed;
-            color: rgba(0, 255, 204, 0.5);
-        }
-        .status-bar {
-            font-family: 'Orbitron', sans-serif;
-            background: rgba(0, 15, 10, 0.85);
-            border-bottom: 1px solid #00ffcc;
-        }
-        .echo {
-            border-left: 2px solid #00ffcc;
-            animation: fadeIn 0.5s ease-in-out;
-            opacity: 0;
-            animation-fill-mode: forwards;
-        }
-        .echo-meta {
-            font-size: 0.75rem;
-            color: rgba(0, 255, 204, 0.6);
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateX(-20px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-        .glitch {
-            animation: glitch-effect 2s infinite;
-        }
+        #stream-container::-webkit-scrollbar { width: 8px; }
+        #stream-container::-webkit-scrollbar-track { background: #001a14; }
+        #stream-container::-webkit-scrollbar-thumb { background-color: #00ffcc; border-radius: 4px; border: 2px solid #001a14; }
+        .ui-panel { background: rgba(0, 15, 10, 0.85); backdrop-filter: blur(10px); border-top: 1px solid #00ffcc; }
+        textarea { background: rgba(0, 50, 40, 0.8); border: 1px solid #00ffcc; color: #00ffcc; box-shadow: 0 0 5px #00ffcc inset; }
+        textarea::placeholder { color: rgba(0, 255, 204, 0.5); }
+        button { font-family: 'Orbitron', sans-serif; transition: background-color 0.3s, box-shadow 0.3s, color 0.3s; }
+        button:hover:not(:disabled) { background-color: #00ffcc; color: #000; box-shadow: 0 0 15px #00ffcc; }
+        button:disabled { background-color: rgba(0, 255, 204, 0.2); border-color: rgba(0, 255, 204, 0.4); cursor: not-allowed; color: rgba(0, 255, 204, 0.5); }
+        .status-bar { font-family: 'Orbitron', sans-serif; background: rgba(0, 15, 10, 0.85); border-bottom: 1px solid #00ffcc; }
+        .echo { border-left: 2px solid #00ffcc; animation: fadeIn 0.5s ease-in-out; opacity: 0; animation-fill-mode: forwards; }
+        .echo-meta { font-size: 0.75rem; color: rgba(0, 255, 204, 0.6); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+        .glitch { animation: glitch-effect 2s infinite; }
         @keyframes glitch-effect {
-            0% { text-shadow: 0.05em 0 0 #00fffc, -0.05em 0 0 #ff00c1; }
-            14% { text-shadow: 0.05em 0 0 #00fffc, -0.05em 0 0 #ff00c1; }
-            15% { text-shadow: -0.05em -0.025em 0 #00fffc, 0.025em 0.025em 0 #ff00c1; }
-            49% { text-shadow: -0.05em -0.025em 0 #00fffc, 0.025em 0.025em 0 #ff00c1; }
-            50% { text-shadow: 0.025em 0.05em 0 #00fffc, 0.05em 0 0 #ff00c1; }
-            99% { text-shadow: 0.025em 0.05em 0 #00fffc, 0.05em 0 0 #ff00c1; }
+            0% { text-shadow: 0.05em 0 0 #00fffc, -0.05em 0 0 #ff00c1; } 14% { text-shadow: 0.05em 0 0 #00fffc, -0.05em 0 0 #ff00c1; }
+            15% { text-shadow: -0.05em -0.025em 0 #00fffc, 0.025em 0.025em 0 #ff00c1; } 49% { text-shadow: -0.05em -0.025em 0 #00fffc, 0.025em 0.025em 0 #ff00c1; }
+            50% { text-shadow: 0.025em 0.05em 0 #00fffc, 0.05em 0 0 #ff00c1; } 99% { text-shadow: 0.025em 0.05em 0 #00fffc, 0.05em 0 0 #ff00c1; }
             100% { text-shadow: -0.025em 0 0 #00fffc, -0.025em -0.05em 0 #ff00c1; }
         }
     </style>
@@ -103,33 +51,38 @@
     </div>
 
     <script type="module">
+        // Firebase SDK imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // DOM Elements
         const echoInput = document.getElementById('echo-input');
         const broadcastBtn = document.getElementById('broadcast-btn');
         const statusText = document.getElementById('status-text');
         const streamContainer = document.getElementById('stream-container');
+        
+        // --- Your Firebase Config ---
+        // IMPORTANT: For this to work on a live site like GitHub Pages,
+        // you MUST check two things in your Firebase project console:
+        // 1. Authentication -> Sign-in method -> Make sure "Anonymous" is ENABLED.
+        // 2. Authentication -> Settings -> Authorized domains -> Make sure your domain
+        //    (e.g., "prasun01.github.io") is on the list.
+        const firebaseConfig = {
+            apiKey: "AIzaSyD00RW5iOkEDqZDzAdQVstQJQcW26aZaXc",
+            authDomain: "chrono-stream-85dbe.firebaseapp.com",
+            projectId: "chrono-stream-85dbe",
+            storageBucket: "chrono-stream-85dbe.appspot.com",
+            messagingSenderId: "86327617530",
+            appId: "1:86327617530:web:ae463335a8b8ec4f89e643",
+            measurementId: "G-65BHTY0XX5"
+        };
 
-        <script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-analytics.js";
-
-        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyD00RW5iOkEDqZDzAdQVstQJQcW26aZaXc",
-  authDomain: "chrono-stream-85dbe.firebaseapp.com",
-  projectId: "chrono-stream-85dbe",
-  storageBucket: "chrono-stream-85dbe.firebasestorage.app",
-  messagingSenderId: "86327617530",
-  appId: "1:86327617530:web:ae463335a8b8ec4f89e643",
-  measurementId: "G-65BHTY0XX5"
-};
+        // --- Standard setup for the live app ---
         const appId = firebaseConfig.projectId;
-const initialAuthToken = null; // Use anonymous login for the public site
-</script>
+        const initialAuthToken = null; // Use anonymous login for the public site
+
+        // Global variables
         let db, auth, userId;
 
         function sanitizeHTML(str) {
@@ -151,7 +104,6 @@ const initialAuthToken = null; // Use anonymous login for the public site
             `;
             
             streamContainer.appendChild(echoElement);
-            // Auto-scroll to the bottom
             streamContainer.scrollTop = streamContainer.scrollHeight;
         }
 
@@ -180,12 +132,13 @@ const initialAuthToken = null; // Use anonymous login for the public site
                 console.error("Firebase Init Error:", error);
                 statusText.textContent = "STATUS: CONNECTION FAILED";
                 statusText.classList.add('glitch');
+                throw error; // Re-throw to be caught by the main function
             }
         }
 
         function setupEchoListener() {
             const echoesCol = collection(db, `/artifacts/${appId}/public/data/stream_echoes`);
-            const q = query(echoesCol, orderBy('timestamp', 'asc')); // Get echoes in order
+            const q = query(echoesCol, orderBy('timestamp', 'asc'));
             
             onSnapshot(q, (snapshot) => {
                 statusText.textContent = `STATUS: CONNECTED | LIVE STREAM ACTIVE`;
@@ -227,16 +180,26 @@ const initialAuthToken = null; // Use anonymous login for the public site
 
         async function main() {
             broadcastBtn.disabled = true;
-            await initFirebase();
-            setupEchoListener();
-            broadcastBtn.disabled = false;
-            broadcastBtn.addEventListener('click', broadcastEcho);
-            echoInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    broadcastEcho();
+            try {
+                await initFirebase();
+                setupEchoListener();
+                broadcastBtn.disabled = false;
+                broadcastBtn.addEventListener('click', broadcastEcho);
+                echoInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        broadcastEcho();
+                    }
+                });
+            } catch (error) {
+                console.error("Main initialization failed:", error);
+                if (error.code === 'auth/configuration-not-found') {
+                    statusText.textContent = 'ERROR: Check Firebase Console: 1. Enable Anonymous Auth. 2. Authorize your domain.';
+                } else {
+                    statusText.textContent = `ERROR: ${error.code || 'INIT_FAILED'}`;
                 }
-            });
+                statusText.classList.add('glitch');
+            }
         }
 
         main();
