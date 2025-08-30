@@ -112,10 +112,29 @@
         const statusText = document.getElementById('status-text');
         const streamContainer = document.getElementById('stream-container');
 
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'chrono-stream-dev';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        <script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
 
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyD00RW5iOkEDqZDzAdQVstQJQcW26aZaXc",
+    authDomain: "chrono-stream-85dbe.firebaseapp.com",
+    projectId: "chrono-stream-85dbe",
+    storageBucket: "chrono-stream-85dbe.firebasestorage.app",
+    messagingSenderId: "86327617530",
+    appId: "1:86327617530:web:ae463335a8b8ec4f89e643",
+    measurementId: "G-65BHTY0XX5"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+</script>
         let db, auth, userId;
 
         function sanitizeHTML(str) {
