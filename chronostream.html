@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chrono-Stream</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Share Tech Mono', monospace;
+            background-color: #000;
+            color: #00ffcc;
+            overflow: hidden;
+        }
+        /* Custom scrollbar for the stream */
+        #stream-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        #stream-container::-webkit-scrollbar-track {
+            background: #001a14;
+        }
+        #stream-container::-webkit-scrollbar-thumb {
+            background-color: #00ffcc;
+            border-radius: 4px;
+            border: 2px solid #001a14;
+        }
+        .ui-panel {
+            background: rgba(0, 15, 10, 0.85);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid #00ffcc;
+        }
+        textarea {
+            background: rgba(0, 50, 40, 0.8);
+            border: 1px solid #00ffcc;
+            color: #00ffcc;
+            box-shadow: 0 0 5px #00ffcc inset;
+        }
+        textarea::placeholder {
+            color: rgba(0, 255, 204, 0.5);
+        }
+        button {
+            font-family: 'Orbitron', sans-serif;
+            transition: background-color 0.3s, box-shadow 0.3s, color 0.3s;
+        }
+        button:hover:not(:disabled) {
+            background-color: #00ffcc;
+            color: #000;
+            box-shadow: 0 0 15px #00ffcc;
+        }
+        button:disabled {
+            background-color: rgba(0, 255, 204, 0.2);
+            border-color: rgba(0, 255, 204, 0.4);
+            cursor: not-allowed;
+            color: rgba(0, 255, 204, 0.5);
+        }
+        .status-bar {
+            font-family: 'Orbitron', sans-serif;
+            background: rgba(0, 15, 10, 0.85);
+            border-bottom: 1px solid #00ffcc;
+        }
+        .echo {
+            border-left: 2px solid #00ffcc;
+            animation: fadeIn 0.5s ease-in-out;
+            opacity: 0;
+            animation-fill-mode: forwards;
+        }
+        .echo-meta {
+            font-size: 0.75rem;
+            color: rgba(0, 255, 204, 0.6);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .glitch {
+            animation: glitch-effect 2s infinite;
+        }
+        @keyframes glitch-effect {
+            0% { text-shadow: 0.05em 0 0 #00fffc, -0.05em 0 0 #ff00c1; }
+            14% { text-shadow: 0.05em 0 0 #00fffc, -0.05em 0 0 #ff00c1; }
+            15% { text-shadow: -0.05em -0.025em 0 #00fffc, 0.025em 0.025em 0 #ff00c1; }
+            49% { text-shadow: -0.05em -0.025em 0 #00fffc, 0.025em 0.025em 0 #ff00c1; }
+            50% { text-shadow: 0.025em 0.05em 0 #00fffc, 0.05em 0 0 #ff00c1; }
+            99% { text-shadow: 0.025em 0.05em 0 #00fffc, 0.05em 0 0 #ff00c1; }
+            100% { text-shadow: -0.025em 0 0 #00fffc, -0.025em -0.05em 0 #ff00c1; }
+        }
+    </style>
+</head>
+<body class="flex flex-col h-screen">
+
+    <div class="status-bar p-2 text-center text-sm uppercase">
+        <span id="status-text">STATUS: CONNECTING TO TEMPORAL NETWORK...</span>
+    </div>
+
+    <div id="stream-container" class="flex-grow p-4 overflow-y-auto space-y-4">
+        <!-- Echoes will be dynamically inserted here -->
+    </div>
+
+    <div class="ui-panel p-4">
+        <textarea id="echo-input" rows="3" maxlength="280" class="w-full p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black focus:ring-[#00ffcc]" placeholder="Imprint an echo onto the global stream..."></textarea>
+        <button id="broadcast-btn" class="w-full mt-2 p-3 bg-transparent border-2 border-[#00ffcc] text-[#00ffcc] font-bold rounded-md uppercase disabled:opacity-50">Broadcast Echo</button>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const echoInput = document.getElementById('echo-input');
+        const broadcastBtn = document.getElementById('broadcast-btn');
+        const statusText = document.getElementById('status-text');
+        const streamContainer = document.getElementById('stream-container');
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'chrono-stream-dev';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let db, auth, userId;
+
+        function sanitizeHTML(str) {
+            const temp = document.createElement('div');
+            temp.textContent = str;
+            return temp.innerHTML;
+        }
+
+        function appendEcho({ text, userId, timestamp }) {
+            const echoElement = document.createElement('div');
+            echoElement.classList.add('echo', 'pl-4');
+            
+            const sanitizedText = sanitizeHTML(text).replace(/\n/g, '<br>');
+            const date = timestamp ? timestamp.toDate().toLocaleString() : 'Just now';
+
+            echoElement.innerHTML = `
+                <p class="echo-meta">> UserID: ${sanitizeHTML(userId.substring(0, 8))}... | Timestamp: ${date}</p>
+                <p class="text-lg">${sanitizedText}</p>
+            `;
+            
+            streamContainer.appendChild(echoElement);
+            // Auto-scroll to the bottom
+            streamContainer.scrollTop = streamContainer.scrollHeight;
+        }
+
+        async function initFirebase() {
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                
+                return new Promise((resolve, reject) => {
+                    onAuthStateChanged(auth, user => {
+                        if (user) {
+                            userId = user.uid;
+                            statusText.textContent = "STATUS: AUTHENTICATED";
+                            resolve();
+                        }
+                    });
+
+                    if (initialAuthToken) {
+                        signInWithCustomToken(auth, initialAuthToken).catch(reject);
+                    } else {
+                        signInAnonymously(auth).catch(reject);
+                    }
+                });
+            } catch (error) {
+                console.error("Firebase Init Error:", error);
+                statusText.textContent = "STATUS: CONNECTION FAILED";
+                statusText.classList.add('glitch');
+            }
+        }
+
+        function setupEchoListener() {
+            const echoesCol = collection(db, `/artifacts/${appId}/public/data/stream_echoes`);
+            const q = query(echoesCol, orderBy('timestamp', 'asc')); // Get echoes in order
+            
+            onSnapshot(q, (snapshot) => {
+                statusText.textContent = `STATUS: CONNECTED | LIVE STREAM ACTIVE`;
+                statusText.classList.remove('glitch');
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === 'added') {
+                        appendEcho(change.doc.data());
+                    }
+                });
+            }, (error) => {
+                console.error("Listener Error:", error);
+                statusText.textContent = "STATUS: CONNECTION INTERRUPTED";
+                statusText.classList.add('glitch');
+            });
+        }
+
+        async function broadcastEcho() {
+            const text = echoInput.value.trim();
+            if (!text) return;
+
+            broadcastBtn.disabled = true;
+            broadcastBtn.textContent = 'BROADCASTING...';
+
+            try {
+                const echoesCol = collection(db, `/artifacts/${appId}/public/data/stream_echoes`);
+                await addDoc(echoesCol, {
+                    text: text,
+                    timestamp: serverTimestamp(),
+                    userId: userId
+                });
+                echoInput.value = '';
+            } catch (error) {
+                console.error("Broadcast Error:", error);
+            } finally {
+                broadcastBtn.disabled = false;
+                broadcastBtn.textContent = 'Broadcast Echo';
+            }
+        }
+
+        async function main() {
+            broadcastBtn.disabled = true;
+            await initFirebase();
+            setupEchoListener();
+            broadcastBtn.disabled = false;
+            broadcastBtn.addEventListener('click', broadcastEcho);
+            echoInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    broadcastEcho();
+                }
+            });
+        }
+
+        main();
+    </script>
+</body>
+</html>
+
